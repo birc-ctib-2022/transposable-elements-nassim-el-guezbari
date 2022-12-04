@@ -89,7 +89,6 @@ class ListGenome(Genome):
 
     Implements the Genome interface using Python's built-in lists
     """
-
     def __init__(self, n: int):
         """Create a new genome with length n."""
         gen_seq=[] #Making the list that will become the genome list. Its an empty list to make sure the length is n and not n+1.
@@ -97,7 +96,7 @@ class ListGenome(Genome):
             gen_seq+=['-'] #To make the list actually longer i add a string. specifically '-' for the string representation of non-TE_regions
         self.genome = gen_seq
         self.te_dict = {}
-        self.te_count = -1 #I am strting the count at -1 to greatly simplify the insert function. 
+        self.te_count = 0
 
     def insert_te(self, pos: int, length: int) -> int:
         """
@@ -115,24 +114,24 @@ class ListGenome(Genome):
         self.te_count += 1 #If we are inserting a TE the count/ID should change
         self.te_dict[self.te_count] = [pos, length] #Insertion of the te into our dict with position as key and length as value
         te_positions = list(self.te_dict.keys()) #Making a list of keys for identifying if the te to be inserted overlap with 
-        # an exsisting te.
-        Before = self.te_dict[self.te_count]
-        for position in te_positions: # itterate over each element in the te dictionary
+        # an exsisting/active te.
+        for position in te_positions: #itterate over each element in the te dictionary
             start = self.te_dict[position][0] # defining a start position
             end = self.te_dict[position][1] + start # defining the end position to know the range
-            if pos > (start - 1) and pos < (end + 1): # cheking overlap, did not feel like checking what the = or >/< operator is.
-                #for nucleotide in range(start, end): #iterating through all nucleotides in the now inactive TE
-                #    self.genome[nucleotide] = 'x'
+        #    print(position,self.te_dict, 'for1',start,pos,end)
+            if start < pos <= end: # cheking overlap.
+        #        print(position, self.te_dict,self.te_dict,'if1')
+        #                    print(position, self.te_dict,'while')
                 self.disable_te(position) #Disabling the alredy exsiting te (since the sequence get changed)
-                #self.te_dict.pop(position) #Removing the te from our dict (this might be the same as displaying that its disabled)
-            elif start > pos: #The positions are start positions so incase start is bigger than pos we need to update the possitions:
+        #        print(position, self.te_dict,'for2 after disable')
+            if start > pos: #The positions are start positions so incase start is bigger than pos we need to update the possitions:
                 self.te_dict[position][0] = start + length #adding the length of the inserted TE to the start position, and updating in the dict.
         self.genome[pos:pos] = length*['A'] #Adding the TE to our genome map.
-        if self.te_dict[self.te_count] == Before: #If the dict entery in position [self.te_count] has not changed we havent had an overlap.
-            new_ID = self.te_count
-        else: #Incase the dict[self.te_count] has changed i give the new TE the latest position in the dict which i expect to be 1 less than self.te_count
-            new_ID = len(self.te_dict)
-        return new_ID
+        #print(position, te_positions, 'end')
+        #self.disable_te(position) #Disabling the alredy exsiting te (since the sequence get changed)
+        #print(position, self.te_dict,pos, length, 'end')
+        #print(''.join(self.genome), pos, length, self.te_count, te_positions, position)
+        return self.te_count
 
     def copy_te(self, te: int, offset: int) -> int | None:
         """
@@ -148,11 +147,17 @@ class ListGenome(Genome):
 
         If te is not active, return None (and do not copy it).
         """
-        if te not in self.te_dict.keys(): #Making sure the te input exsists as an active te in the genome.
+        if te not in list(self.te_dict.keys()): #Making sure the te input exsists as an active te in the genome.
             return None
         else: #using else statement to avoide copying incase its not in the genome
+            if offset < 0:
+                pos_after_offset = 50 + self.te_dict[te][0] + offset #adding (so either negativ or positive should work) the offset to the position pre offset
+            #    print(self.te_dict, self.te_dict[te], self.te_dict[te][0],offset,pos_after_offset,self.te_dict[te][1], "HERE!")
+                return self.insert_te(pos_after_offset, self.te_dict[te][1])    
             pos_after_offset = self.te_dict[te][0] + offset #adding (so either negativ or positive should work) the offset to the position pre offset
+            #print(self.te_dict, self.te_dict[te], self.te_dict[te][0],offset,pos_after_offset,self.te_dict[te][1], "HERE!")
             return self.insert_te(pos_after_offset, self.te_dict[te][1]) #we want an int output which i assume to be the new id so i just throw it to insert_tee.
+
 
     def disable_te(self, te: int) -> None:
         """
@@ -162,9 +167,19 @@ class ListGenome(Genome):
         TEs are already inactive, so there is no need to do anything
         for those.
         """
-        for nucleotide in range(self.te_dict[te][0], self.te_dict[te][1]):
-            self.genome[nucleotide] = 'x'
-        self.te_dict.pop(self.te_dict[te][0])
+        #print(''.join(self.genome), 'DISABLE!', self.te_dict)
+        for nucleotide in range(self.te_dict[te][0], self.te_dict[te][0]+self.te_dict[te][1]): #iterating through all nucleotides in the now inactive TE
+                    if self.genome[nucleotide] == 'A':
+        #                print(position, self.te_dict,'if2')
+                        self.genome[nucleotide] = 'x'
+                    if nucleotide +1 == self.te_dict[te][0]+self.te_dict[te][1]:
+        #                print(position, self.te_dict,'if3')
+                        i = 1
+                        while self.genome[nucleotide+i] == 'A':
+                            self.genome[nucleotide+i] = 'x'
+                            i+=1
+        self.te_dict.pop(te)
+        #print(self.te_dict)
         return None
 
     def active_tes(self) -> list[int]:
@@ -187,10 +202,8 @@ class ListGenome(Genome):
         represented with the character '-', active TEs with 'A', and disabled
         TEs with 'x'.
         """
-        Genome_str = ''
-        for nucleotide in self.genome:
-            Genome_str.join(nucleotide)
-        return Genome_str
+        print(''.join(self.genome))
+        return ''.join(self.genome)
 
 #-------------------------------------------Linked list genome representation------------------------------------------------------------#
 from typing import(
@@ -243,6 +256,9 @@ class LinkedListGenome(Genome):
         self.te_dict = {}
         self.te_count = -1
 
+            for _ in range(self.length):
+                insert_after(self.head.prev, '-')
+
     def insert_te(self, pos: int, length: int) -> int:
         """
         Insert a new transposable element.
@@ -256,6 +272,9 @@ class LinkedListGenome(Genome):
 
         Returns a new ID for the transposable element.
         """
+        active_tes = list(self.te_identities.items())
+        for id, te_range in active_tes:
+            start, end = te_range
         self.te_count += 1
         self.te_dict[self.te_count] = [pos, length]
         te_positions = list(self.te_dict.keys())
