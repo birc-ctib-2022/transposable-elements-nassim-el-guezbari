@@ -115,7 +115,7 @@ class ListGenome(Genome):
         self.te_dict[self.te_count] = [pos, length] #Insertion of the te into our dict with position as key and length as value
         te_positions = list(self.te_dict.keys()) #Making a list of keys for identifying if the te to be inserted overlap with 
         # an exsisting/active te.
-        for position in te_positions: #itterate over each element in the te dictionary
+        for position in te_positions: # itterate over each element in the te dictionary
             start = self.te_dict[position][0] # defining a start position
             end = self.te_dict[position][1] + start # defining the end position to know the range
         #    print(position,self.te_dict, 'for1',start,pos,end)
@@ -227,7 +227,7 @@ class Link(Generic[T]):
 
 
 def insert_after(link: Link[T], val: T) -> None:
-    """Add a new link containing val after link."""
+    """Add new link containing val after link."""
     new_link = Link(val, link, link.next)
     new_link.prev.next = new_link
     new_link.next.prev = new_link
@@ -254,10 +254,9 @@ class LinkedListGenome(Genome):
         self.head.prev = self.head
         self.length = n
         self.te_dict = {}
-        self.te_count = -1
-
-            for _ in range(self.length):
-                insert_after(self.head.prev, '-')
+        self.te_count = 0
+        for _ in range(n):
+            insert_after(self.head.prev, "-")
 
     def insert_te(self, pos: int, length: int) -> int:
         """
@@ -272,29 +271,32 @@ class LinkedListGenome(Genome):
 
         Returns a new ID for the transposable element.
         """
-        active_tes = list(self.te_identities.items())
-        for id, te_range in active_tes:
-            start, end = te_range
         self.te_count += 1
-        self.te_dict[self.te_count] = [pos, length]
+        self.te_dict[self.te_count] = [pos, pos + length]
         te_positions = list(self.te_dict.keys())
+        #print(self.te_dict, 's1')
         for position in te_positions:
-            start = self.te_dict[position][0]
-            end = self.te_dict[position][1] + start
-            if pos > (start - 1) and pos < (end + 1):
-                self.disable_te(position)
-            elif start > pos:
-                self.te_dict[position] = (start + length, end + length)
-        self.te_dict[self.te_count] = (pos, pos + length)
-        link1 = self.head.next
-        for _ in range(pos - 1):
-            link1 = link1.next
-        for _ in range(length):
-            insert_after(link1, 'A')
-            link1 = link1.next
-        self.length += length
-
-        return self.te_dict[self.te_count][0]
+            #print(self.te_dict,'for1')
+            start = self.te_dict[position][0] # defining a start position
+            end = self.te_dict[position][1] # defining the end position to know the range
+            if start < pos < end: # cheking for overlap.
+                print(self.te_dict,'pre disable',position, start, pos, end)
+                self.disable_te(position) #Disabling the alredy exsiting te (since the sequence get changed)
+                print(self.te_dict,'pro disable',position, start, pos, end)
+            if start > pos: #The positions are start positions so incase start is bigger than pos we need to update the possitions:
+                #print(self.te_dict,'if2')
+                self.te_dict[position][0] = start + length #adding the length of the inserted TE to the start position, and updating in the dict.
+        current = self.head.next
+        for _ in range (pos - 1):
+            #print(self.te_dict,'for2')
+            current = current.next
+        for _ in range (length):
+            #print(self.te_dict,'for3')
+            insert_after(current, 'A')
+            current = current.next
+        self.length = self.length + length
+        #print('s2')
+        return self.te_count
 
     def copy_te(self, te: int, offset: int) -> int | None:
         """
@@ -314,11 +316,11 @@ class LinkedListGenome(Genome):
             return None
         else:
             start = self.te_dict[te][0]
-            end = self.te_dict[te][1] + start
-            if start + offset < 0:
-                return self.insert_te(start + offset + self.length, end - start)
-            else:
+            end = self.te_dict[te][1]
+            if offset > 0:
                 return self.insert_te(start + offset, end - start)
+            if (start + offset) < 0:
+                return self.insert_te(start + offset + self.length, end - start)
 
     def disable_te(self, te: int) -> None:
         """
@@ -328,11 +330,18 @@ class LinkedListGenome(Genome):
         TEs are already inactive, so there is no need to do anything
         for those.
         """
-        for _ in range(self.te_dict[te][0]):
-            self.head.next = self.head.next.next
-        for _ in range((self.te_dict[te][0] + self.te_dict[te][1]) - self.te_dict[te][0]):
-            self.head.next.val = 'x'
-            self.head.next = self.head.next.next
+        if te in self.te_dict.keys():
+            start = self.te_dict[te][0]
+            end = self.te_dict[te][1]
+            self.te_dict.pop(te)
+            current = self.head.next
+            for _ in range(start):
+                current = current.next
+            for _ in range(end - start):
+                current.val = 'x'
+                current = current.next
+                #print(self.te_dict, 'here?')
+        return None
 
     def active_tes(self) -> list[int]:
         """Get the active TE IDs."""
@@ -355,7 +364,9 @@ class LinkedListGenome(Genome):
         TEs with 'x'.
         """
         genome_list = []
+        nucleotide = self.head.next
         for _ in range(self.length):
-            genome_list.append(self.head.next.val)
-            self.head.next = self.head.next.next
+            genome_list.append(nucleotide.val)
+            nucleotide = nucleotide.next
+            print(''.join(genome_list))
         return "".join(genome_list)
