@@ -111,6 +111,7 @@ class ListGenome(Genome):
 
         Returns a new ID for the transposable element.
         """
+        #print(self.te_dict, 'pre disable')
         self.te_count += 1 #If we are inserting a TE the count/ID should change
         self.te_dict[self.te_count] = [pos, length] #Insertion of the te into our dict with position as key and length as value
         te_positions = list(self.te_dict.keys()) #Making a list of keys for identifying if the te to be inserted overlap with 
@@ -124,28 +125,9 @@ class ListGenome(Genome):
             if start > pos: #The positions are start positions so incase start is bigger than pos we need to update the possitions:
                 self.te_dict[position][0] = start + length #adding the length of the inserted TE to the start position, and updating in the dict.
 
-        if pos <= len(self.genome):
-            self.genome[pos:pos] = length*['A'] #Adding the TE to our genome map.
-            for TE in self.te_dict:
-                #print(TE, self.te_dict[TE])
-                if self.te_dict[TE][0] > pos:
-                    self.te_dict[TE][0] += self.te_dict[self.te_count][1]
-                    #print('fits in genome',self.te_count, self.te_dict[self.te_count])
-        
-        else:
-            for TE in self.te_dict:
-                if self.te_dict[TE][0] > (pos % len(self.genome)):
-                    print((pos % len(self.genome)),self.te_dict[TE][0])
-                    self.te_dict[TE][0] += self.te_dict[self.te_count][1]
-                    print(self.te_dict[TE][0])
-                    #print('bigger',self.te_count, self.te_dict[self.te_count])
-            while pos >= len(self.genome):
-                #print(pos,len(self.genome),'while')
-                pos = pos % len(self.genome)
-                self.genome[pos:pos] = length*['A'] #Adding the TE to our genome map.
-        #print(' ')
-        #print(self.te_dict, pos)
-        #print(' ')
+        #print(self.te_dict, 'after disable')
+
+        self.genome[pos:pos] = length*['A'] #Adding the TE to our genome map.
         return self.te_count
 
     def copy_te(self, te: int, offset: int) -> int | None:
@@ -167,9 +149,11 @@ class ListGenome(Genome):
         else: #using else statement to avoide copying incase its not in the genome
             if offset < 0:
                 pos_after_offset = len(self.genome) + self.te_dict[te][0] + offset #adding (so either negativ or positive should work) the offset to the position pre offset
+            #    print(self.te_dict[te][0],offset, len(self), len(self.genome))
             #    print(self.te_dict, self.te_dict[te], self.te_dict[te][0],offset,pos_after_offset,self.te_dict[te][1], "HERE!")
                 return self.insert_te(pos_after_offset, self.te_dict[te][1])    
-            pos_after_offset = self.te_dict[te][0] + offset #adding (so either negativ or positive should work) the offset to the position pre offset
+            pos_after_offset = (self.te_dict[te][0] + offset) % len(self.genome) #adding (so either negativ or positive should work) the offset to the position pre offset
+            #print(pos_after_offset,self.te_dict[te][0],offset, len(self.genome))
             #print(self.te_dict, self.te_dict[te], self.te_dict[te][0],offset,pos_after_offset,self.te_dict[te][1], "HERE!")
             #print(self.te_dict[2][0],self.te_dict[2][1])
             return self.insert_te(pos_after_offset, self.te_dict[te][1]) #we want an int output which i assume to be the new id so i just throw it to insert_tee.
@@ -187,17 +171,16 @@ class ListGenome(Genome):
         pos = self.te_dict[te][0]
         if self.te_dict[te][0] > len(self.genome):
             pos = self.te_dict[te][0]
-            while pos > len(self.genome):
-                pos = pos - len(self.genome)
-                print(pos,len(self.genome), self.te_dict[te][1], 'here')
+            pos = pos % len(self.genome)
+            #print(pos,len(self.genome), self.te_dict[te][1], 'here')
         for nucleotide in range(pos, pos+self.te_dict[te][1]): #iterating through all nucleotides in the now inactive TE
-            print(nucleotide, self.genome[nucleotide-2])
+            #print(nucleotide, self.genome[nucleotide-2])
             if self.genome[nucleotide] == 'A':
                 #print(pos, self.te_dict,'if2')
                 self.genome[nucleotide] = 'x'
             if nucleotide +1 == pos+self.te_dict[te][1]:
                 #print(self.te_dict[te],pos, self.te_dict,len(self.genome))
-                i = -2
+                i = 0
                 while self.genome[nucleotide+i] == 'A':
                     self.genome[nucleotide+i] = 'x'
                     i+=1

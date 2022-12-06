@@ -63,7 +63,7 @@ def sim_te(n: int, k: int,
                 pos = rand.randint(0, len(genome))
                 length = np.random.geometric(1/theta.te_len)
                 genome.insert_te(pos, length)
-                print('insert',pos,length,genome)
+                #print('insert',pos,length,genome)
 
             case Ops.COPY:
                 te = rand.choice(active)
@@ -71,12 +71,12 @@ def sim_te(n: int, k: int,
                 if rand.random() < 0.5:
                     offset = -offset
                 genome.copy_te(te, offset)
-                print('copy', te, offset, genome)
+                #print('copy', te, offset, genome)
 
             case Ops.DISABLE:
                 te = rand.choice(active)
                 genome.disable_te(te)
-                print('disable', te, genome)
+                #print('disable', te, genome)
 
     return str(genome)
 
@@ -93,4 +93,4 @@ if __name__ == '__mainvgv__':
     elapsed = timeit.default_timer() - start_time
     print("Linked lists:", elapsed)
 
-print(sim_te(30, 10, seed = 1984, theta = SimParams(te_len=10)))
+#print(sim_te(30, 10, seed = 1984, theta = SimParams(te_len=10)))
