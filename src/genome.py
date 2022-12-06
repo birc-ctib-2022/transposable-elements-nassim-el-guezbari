@@ -128,7 +128,7 @@ class ListGenome(Genome):
         #print(self.te_dict, 'after disable')
 
         self.genome[pos:pos] = length*['A'] #Adding the TE to our genome map.
-        return self.te_count
+        return self.te_count #returning the 'index' of the newly inserted
 
     def copy_te(self, te: int, offset: int) -> int | None:
         """
@@ -291,6 +291,7 @@ class LinkedListGenome(Genome):
 
         Returns a new ID for the transposable element.
         """
+
         self.te_count += 1
         self.te_dict[self.te_count] = [pos, pos + length]
         te_positions = list(self.te_dict.keys())
