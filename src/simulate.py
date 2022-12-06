@@ -41,7 +41,7 @@ def sim_te(n: int, k: int,
            *,  # the remaining args below must be given by keyword
            theta: SimParams = SimParams(),
            seed: int | None = None,
-           genome_class: Type[Genome] = LinkedListGenome) -> str:
+           genome_class: Type[Genome] = ListGenome) -> str:
     """Simulate a genome of initial size n for k operations.
     
     >>> sim_te(30, 10, seed = 1984, theta = SimParams(te_len=10))
@@ -93,4 +93,4 @@ if __name__ == '__mainvgv__':
     elapsed = timeit.default_timer() - start_time
     print("Linked lists:", elapsed)
 
-print(sim_te(30, 10, seed = 1984, theta = SimParams(te_len=10)))
+#print(sim_te(30, 10, seed = 1984, theta = SimParams(te_len=10)))
