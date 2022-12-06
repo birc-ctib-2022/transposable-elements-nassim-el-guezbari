@@ -172,7 +172,81 @@ Listegenome operations:
         return ''.join(self.genome)
     Complexity: O(n), fordi 'join()' kører i O(n) fordi den skal køre over hele genomet også tilføje dem til den tomme string, det tager O(k).
 
+LinkedListGenome operations:
+    def __init__(self, n: int):
+        """Create a new genome with length n."""
+        self.head = Link(None, None, None)
+        self.head.next = self.head
+        self.head.prev = self.head
+        self.length = n
+        self.te_dict = {}
+        self.te_count = 0
+        for _ in range(n):
+            insert_after(self.head.prev, "-")
+    Complexity: O(n), tildelinger tager O(1) også tager for looped O(n).
 
-    
+    def insert_te(self, pos: int, length: int) -> int:
+        self.te_count += 1
+        self.te_dict[self.te_count] = [pos, pos + length]
+        te_positions = list(self.te_dict.keys())
+        for position in te_positions:
+            start = self.te_dict[position][0]
+            end = self.te_dict[position][1]
+            if start < pos < end:
+                self.disable_te(position)
+            if start > pos:
+                self.te_dict[position][0] = start + length
+        current = self.head.next
+        for _ in range (pos - 1):
+            current = current.next
+        for _ in range (length):
+            insert_after(current, 'A')
+            current = current.next
+        self.length = self.length + length
+        return self.te_count
+    Complexity: O(n+m), Største dellen af insert_te kører i O(k), mens de 2 for loops kører i O(n) og O(m) og dermed har vi en samlet complextitet af O(n+m)
+
+    def copy_te(self, te: int, offset: int) -> int | None:
+        if te not in self.te_dict:
+            return None
+        else:
+            start = self.te_dict[te][0]
+            end = self.te_dict[te][1]
+            if offset > 0:
+                return self.insert_te(start + offset, end - start)
+            if (start + offset) < 0:
+                return self.insert_te(start + offset + self.length, end - start)
+    Complexitet: O(k), som i listgenom, ignorer jeg complexiteten af at vi kalder insert_te. Så med den resterende del af copy_te der tager O(k) er complexiteten bare O(k).
+
+    def disable_te(self, te: int) -> None:
+        if te in self.te_dict.keys():
+            start = self.te_dict[te][0]
+            end = self.te_dict[te][1]
+            self.te_dict.pop(te)
+            current = self.head.next
+            for _ in range(start):
+                current = current.next
+            for _ in range(end - start):
+                current.val = 'x'
+                current = current.next
+        return None
+    Complexity: O(n+m), primært er det O(1) men de 2, for loops er O(n) og O(m) så O(n+m).
+
+    def active_tes(self) -> list[int]:
+        return list(self.te_dict.keys())
+    Complexity: O(k), for både keys() og list() kører i O(k)
+
+    def __len__(self) -> int:
+        return self.length
+    Complexity: O(1)
+
+    def __str__(self) -> str:
+        genome_list = []
+        nucleotide = self.head.next
+        for _ in range(self.length):
+            genome_list.append(nucleotide.val)
+            nucleotide = nucleotide.next
+        return "".join(genome_list)
+    Complexity: O(2n), for lopped kører over hele genomets længde så O(n) også har vi join() der tiljøjer hele genomet ind i en string som tager O(n) så vi ender ud med O(2n)
 
 In `src/simulate.py` you will find a program that can run simulations and tell you actual time it takes to simulate with different implementations. You can use it to test your analysis. You can modify the parameters to the simulator if you want to explore how they affect the running time.
