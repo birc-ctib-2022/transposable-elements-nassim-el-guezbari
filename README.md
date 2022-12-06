@@ -100,6 +100,79 @@ You are free to implement the genome classes however you want, and using whateer
 
 When you have implemented the two (or more) classes, describe the complexity of each operation as a function of the genome size (at the time of the operation), and the size of the TE involved (and when copying, the offset you are copying). Put the description here:
 
-**FIXME: OPERATION COMPLEXITY**
+Notation:
+n = genome size
+m = TE size
+
+Listegenome operations:
+    def __init__(self, n: int):
+        gen_seq=[]
+        for _ in range(n):
+            gen_seq+=['-']
+        self.genome = gen_seq
+        self.te_dict = {}
+        self.te_count = 0
+    Complexity: O(n), for vi laver en liste ved at tilføje ['-'] til listen gen_seq n gange. De resterende operationer er O(k) så
+    de påvirker ikke complexiteten.
+
+    def insert_te(self, pos: int, length: int) -> int:
+        self.te_count += 1
+        self.te_dict[self.te_count] = [pos, length]
+        te_positions = list(self.te_dict.keys())
+        
+        for position in te_positions:
+            start = self.te_dict[position][0]
+            end = self.te_dict[position][1] + start
+            if start < pos <= end:
+                self.disable_te(position)
+            if start > pos:
+                self.te_dict[position][0] = start + length
+
+        self.genome[pos:pos] = length*['A']
+        return self.te_count
+    Complexity: O(n+m), jeg ignorer lige at vi kalder disable, så den primære complexitet er baseret ud fra selve indsætelsen af TE i genomet. Resten har complexiteten O(k) så igen ignoreres de. O(n+m) kommer så fra "'self.genome[pos:pos] = length*['A']'" i det vi putter hele TE'en ind som tager O(m) at indsætte også O(n) for at rygge alle de følgende elementer.
+
+    def copy_te(self, te: int, offset: int) -> int | None:
+        if te not in list(self.te_dict.keys()):
+            return None
+        else:
+            if offset < 0:
+                pos_after_offset = len(self.genome) + self.te_dict[te][0] + offset
+                return self.insert_te(pos_after_offset, self.te_dict[te][1])    
+            pos_after_offset = (self.te_dict[te][0] + offset) % len(self.genome)
+            return self.insert_te(pos_after_offset, self.te_dict[te][1])
+    Complexity: O(k), igen ignoreres at vi kalder en anden funktion (insert_te). Alt ande i copy er beregninger som køre i O(k).
+
+    def disable_te(self, te: int) -> None:
+        pos = self.te_dict[te][0]
+        if self.te_dict[te][0] > len(self.genome):
+            pos = self.te_dict[te][0]
+            pos = pos % len(self.genome)
+        for nucleotide in range(pos, pos+self.te_dict[te][1]): #iterating through all nucleotides in the now inactive TE
+            if self.genome[nucleotide] == 'A':
+                self.genome[nucleotide] = 'x'
+            if nucleotide +1 == pos+self.te_dict[te][1]:
+                i = 0
+                while self.genome[nucleotide+i] == 'A':
+                    self.genome[nucleotide+i] = 'x'
+                    i+=1
+        self.te_dict.pop(te)
+        return None
+    Complexity: O(m), Primært kører alt igen i O(k) men når 'A' i genomet ændres til 'x' løber vi over m (længden af TE'en der deaktiveres) så O(m).
+
+    def active_tes(self) -> list[int]:
+        return list(self.te_dict.keys())
+    Complexity: O(k), fordi 'list()' kører i O(k), det samme gælder 'keys()'
+
+    def __len__(self) -> int:
+        return len(self.genome)
+    Complexity: O(k) fordi 'len()' kører i O(k)
+
+    def __str__(self) -> str:
+        return ''.join(self.genome)
+    Complexity: O(n), fordi 'join()' kører i O(n) fordi den skal køre over hele genomet også tilføje dem til den tomme string, det tager O(k).
+
+
+    
 
 In `src/simulate.py` you will find a program that can run simulations and tell you actual time it takes to simulate with different implementations. You can use it to test your analysis. You can modify the parameters to the simulator if you want to explore how they affect the running time.

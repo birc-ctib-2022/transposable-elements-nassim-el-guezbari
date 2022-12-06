@@ -211,20 +211,6 @@ class ListGenome(Genome):
         #print(''.join(self.genome))
         return ''.join(self.genome)
 
-    def true_index(pos: int, length: int, genom: list) -> None:
-        'Take an offset and reevaluating it to an position inbound of the genome'
-        if pos <= len(genom):
-            genom[pos:pos] = length*['A'] #Adding the TE to our genome map.
-        else:
-            #pos = pos - len(self.genome)
-            #print(pos,self.te_dict[self.te_count][0])
-            while pos >= len(genom):
-                #print(pos%len(self.genome))
-                pos = pos % len(genom)
-                #print(pos,"while loop")
-                #print(pos,len(self.genome))
-            genom[pos:pos] = length*['A'] #Adding the TE to our genome map.
-
 #-------------------------------------------Linked list genome representation------------------------------------------------------------#
 from typing import(
     Generic, TypeVar
