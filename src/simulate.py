@@ -43,7 +43,7 @@ def sim_te(n: int, k: int,
            seed: int | None = None,
            genome_class: Type[Genome] = ListGenome) -> str:
     """Simulate a genome of initial size n for k operations.
-
+    
     >>> sim_te(30, 10, seed = 1984, theta = SimParams(te_len=10))
     '---AAAA------------x--xAAAAxxx------AAAA-xxxxAAAA------'
     """
@@ -63,6 +63,7 @@ def sim_te(n: int, k: int,
                 pos = rand.randint(0, len(genome))
                 length = np.random.geometric(1/theta.te_len)
                 genome.insert_te(pos, length)
+                #print('insert',pos,length,genome)
 
             case Ops.COPY:
                 te = rand.choice(active)
@@ -70,15 +71,17 @@ def sim_te(n: int, k: int,
                 if rand.random() < 0.5:
                     offset = -offset
                 genome.copy_te(te, offset)
+                #print('copy', te, offset, genome)
 
             case Ops.DISABLE:
                 te = rand.choice(active)
                 genome.disable_te(te)
+                #print('disable', te, genome)
 
     return str(genome)
 
 
-if __name__ == '__main__':
+if __name__ == '__mainvgv__':
     import timeit
     start_time = timeit.default_timer()
     sim_te(1_000_000, 1000)
@@ -89,3 +92,5 @@ if __name__ == '__main__':
     sim_te(1_000_000, 1000, genome_class=LinkedListGenome)
     elapsed = timeit.default_timer() - start_time
     print("Linked lists:", elapsed)
+
+#print(sim_te(30, 10, seed = 1984, theta = SimParams(te_len=10)))
